@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "isolatedDeclarations": false,
+    "declaration": false,
+    "types": ["node"],
+    "lib": ["ES2022"]
+  },
+  "include": [".", "../src"]
+}
