@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CostaRica,
+  type Document,
   Guatemala,
   InvalidArgumentError,
   isDocument,
@@ -13,7 +14,6 @@ import {
   Td3,
   ValidationError,
   ValidationResult,
-  type Document,
 } from '../src';
 import { replaceAt } from './helpers';
 
@@ -81,7 +81,11 @@ describe('Registry', () => {
     for (const [, country, name, key, level] of readme.matchAll(
       /^\| ([^|]+) \| ([^|]+) \| `([a-z]+\.[a-z0-9_]+)` \| (completa|formato)/gm,
     )) {
-      expected[key as string] = [country as string, name as string, level === 'completa' ? Level.Complete : Level.Format];
+      expected[key as string] = [
+        country as string,
+        name as string,
+        level === 'completa' ? Level.Complete : Level.Format,
+      ];
     }
     const actual: Record<string, [string, string, Level]> = {};
     for (const d of Registry.describe()) {
@@ -103,11 +107,14 @@ describe('Registry', () => {
     expect(() => Registry.register('xx.mal', class {} as never)).toThrow(InvalidArgumentError);
     expect(() => Registry.register('xx.mal', 'nada' as never)).toThrow(InvalidArgumentError);
     expect(() =>
-      Registry.register('xx.mal', class {
-        constructor() {
-          throw new Error('x');
-        }
-      } as never),
+      Registry.register(
+        'xx.mal',
+        class {
+          constructor() {
+            throw new Error('x');
+          }
+        } as never,
+      ),
     ).toThrow(InvalidArgumentError);
   });
 
@@ -291,8 +298,12 @@ describe('parse()', () => {
   it('cédula de Panamá', () => {
     const { CedulaData, CedulaKind } = Panama;
     expect(Registry.parse('pa.cedula', '8-926-1601')).toEqual(new CedulaData(CedulaKind.Birth, 8, null, '926', '1601'));
-    expect(Registry.parse('pa.cedula', 'pe 5 687')).toEqual(new CedulaData(CedulaKind.BornAbroad, null, null, '5', '687'));
-    expect(Registry.parse('pa.cedula', 'N-19-473')).toEqual(new CedulaData(CedulaKind.Naturalized, null, null, '19', '473'));
+    expect(Registry.parse('pa.cedula', 'pe 5 687')).toEqual(
+      new CedulaData(CedulaKind.BornAbroad, null, null, '5', '687'),
+    );
+    expect(Registry.parse('pa.cedula', 'N-19-473')).toEqual(
+      new CedulaData(CedulaKind.Naturalized, null, null, '19', '473'),
+    );
     expect(Registry.parse('pa.cedula', 'E-8-12345')).toEqual(
       new CedulaData(CedulaKind.ForeignResident, 8, null, null, '12345'),
     );

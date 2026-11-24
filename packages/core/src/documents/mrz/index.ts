@@ -1,6 +1,18 @@
+import { type GeneratesNumbers, type ParsesNumbers, ValidationError } from '../../types';
 import { int, isValidDate, randomDigits, randomInt, randomItem, zeroPad } from '../../utils';
-import { ValidationError, type GeneratesNumbers, type ParsesNumbers } from '../../types';
 import { AbstractDocument } from '../abstract-document';
+
+const SEXES: readonly string[] = ['M', 'F', 'X', '<'];
+
+/** `<` hasta completar `length`. */
+const pad = (text: string, length: number): string => text.padEnd(length, '<');
+
+/** Campo vacío: solo relleno `<`. */
+const isFiller = (field: string): boolean => /^<*$/.test(field);
+
+/** Fecha AAMMDD al azar con el año entre `yearMin` y `yearMax` (dos dígitos). */
+const randomYymmdd = (yearMin: number, yearMax: number): string =>
+  zeroPad(randomInt(yearMin, yearMax), 2) + zeroPad(randomInt(1, 12), 2) + zeroPad(randomInt(1, 28), 2);
 
 /** Datos de una MRZ válida. Las fechas son AAMMDD tal como aparecen: el siglo no se infiere. */
 export class MrzData {
@@ -128,14 +140,8 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
   /** Cada línea en su renglón. */
   override format(number: string): string {
     const compact = this.compact(number);
-    if (compact.length % this.lineLength !== 0) {
-      return compact;
-    }
-    const lines: string[] = [];
-    for (let i = 0; i < compact.length; i += this.lineLength) {
-      lines.push(compact.slice(i, i + this.lineLength));
-    }
-    return lines.join('\n');
+    const lines = compact.length / this.lineLength;
+    return Number.isInteger(lines) ? this.group(compact, Array<number>(lines).fill(this.lineLength), '\n') : compact;
   }
 
   protected override checkContent(compact: string): ValidationError | null {
@@ -179,9 +185,9 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
     const surname = randomItem(Object.keys(SAMPLE_NAMES));
     return {
       number: AbstractMrz.randomNumber(),
-      birth: zeroPad(randomInt(50, 99), 2) + zeroPad(randomInt(1, 12), 2) + zeroPad(randomInt(1, 28), 2),
+      birth: randomYymmdd(50, 99),
       sex: randomItem(['M', 'F', '<']),
-      expiry: zeroPad(randomInt(27, 40), 2) + zeroPad(randomInt(1, 12), 2) + zeroPad(randomInt(1, 28), 2),
+      expiry: randomYymmdd(27, 40),
       surname,
       given: SAMPLE_NAMES[surname] as string,
     };
@@ -189,7 +195,7 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
 
   /** `<` hasta completar `length`. */
   protected static pad(text: string, length: number): string {
-    return text.padEnd(length, '<');
+    return pad(text, length);
   }
 
   protected static randomDigits(length: number): string {
@@ -203,7 +209,7 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
       /^[A-Z<]{3}$/.test(f.issuer) &&
       /^[A-Z<]{3}$/.test(f.nationality) &&
       /^[A-Z][A-Z<]*$/.test(f.name) &&
-      ['M', 'F', 'X', '<'].includes(f.sex) &&
+      SEXES.includes(f.sex) &&
       AbstractMrz.validDate(f.birth, f.birthCheck) &&
       AbstractMrz.validDate(f.expiry, f.expiryCheck);
     return valid ? null : ValidationError.Component;
@@ -225,7 +231,7 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
 
   /** Con el campo vacío (todo `<`) el dígito puede ser `<` o `0`. */
   private static optionalMatches(field: string, check: string): boolean {
-    return /^<*$/.test(field) ? check === '<' || check === '0' : AbstractMrz.matches(field, check);
+    return isFiller(field) ? check === '<' || check === '0' : AbstractMrz.matches(field, check);
   }
 
   /** Una fecha desconocida (`<<<<<<`) ya se validó en validDate(). */
@@ -241,6 +247,8 @@ export abstract class AbstractMrz extends AbstractDocument implements GeneratesN
     return /^\d{6}$/.test(date) && isValidDate(2000, int(date.slice(2, 4)), int(date.slice(4, 6)));
   }
 }
+
+const cd = AbstractMrz.checkDigit;
 
 /**
  * MRZ de cédula o tarjeta de identidad (TD1): 3 líneas de 30 caracteres. ICAO Doc 9303, parte 5.
@@ -282,8 +290,6 @@ export class Td1 extends AbstractMrz {
 
   protected draft(): string {
     const h = AbstractMrz.randomHolder();
-    const pad = AbstractMrz.pad;
-    const cd = AbstractMrz.checkDigit;
     return (
       `I<UTO${h.number}${cd(h.number)}${pad('', 15)}` +
       `${h.birth}${cd(h.birth)}${h.sex}${h.expiry}${cd(h.expiry)}UTO${pad('', 11)}<` +
@@ -330,8 +336,6 @@ export class Td2 extends AbstractMrz {
 
   protected draft(): string {
     const h = AbstractMrz.randomHolder();
-    const pad = AbstractMrz.pad;
-    const cd = AbstractMrz.checkDigit;
     return (
       pad(`I<UTO${h.surname}<<${h.given}`, 36) +
       `${h.number}${cd(h.number)}UTO${h.birth}${cd(h.birth)}${h.sex}${h.expiry}${cd(h.expiry)}` +
@@ -375,10 +379,8 @@ export class Td3 extends AbstractMrz {
 
   protected draft(): string {
     const h = AbstractMrz.randomHolder();
-    const pad = AbstractMrz.pad;
-    const cd = AbstractMrz.checkDigit;
-    const optional = randomInt(0, 1) === 1 ? pad(AbstractMrz.randomDigits(9), 14) : pad('', 14);
-    const optionalCheck = /^<*$/.test(optional) ? '<' : String(cd(optional));
+    const optional = randomInt(0, 1) === 1 ? pad(randomDigits(9), 14) : pad('', 14);
+    const optionalCheck = isFiller(optional) ? '<' : String(cd(optional));
     return (
       pad(`P<UTO${h.surname}<<${h.given}`, 44) +
       `${h.number}${cd(h.number)}UTO${h.birth}${cd(h.birth)}${h.sex}${h.expiry}${cd(h.expiry)}` +

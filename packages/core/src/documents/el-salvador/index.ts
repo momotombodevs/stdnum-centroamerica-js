@@ -1,15 +1,16 @@
-import { randomDigits, randomInt, range, weightedSum, int } from "../../utils";
-import { ValidationError, type GeneratesNumbers } from "../../types";
-import { AbstractDocument } from "../abstract-document";
+import { type GeneratesNumbers, ValidationError } from '../../types';
+import { int, randomDigits, randomInt, range, weightedSum } from '../../utils';
+import { AbstractDocument } from '../abstract-document';
+
+const DUI_WEIGHTS = range(9, 2);
+const OLD_NIT_WEIGHTS = range(14, 2);
 
 /** DUI (RNPN): 8 dígitos + verificador (pesos 9..2, módulo 10; fórmula de código abierto). Nivel: completa. */
 export class Dui extends AbstractDocument implements GeneratesNumbers {
   protected override readonly pattern: RegExp = /^\d{9}$/;
 
   protected override checkContent(compact: string): ValidationError | null {
-    return Dui.checkDigit(compact) === Number(compact.charAt(8))
-      ? null
-      : ValidationError.Checksum;
+    return Dui.checkDigit(compact) === Number(compact.charAt(8)) ? null : ValidationError.Checksum;
   }
 
   generate(): string {
@@ -23,7 +24,7 @@ export class Dui extends AbstractDocument implements GeneratesNumbers {
 
   /** Verificador de los 8 primeros dígitos. */
   private static checkDigit(digits: string): number {
-    return (10 - (weightedSum(digits, range(9, 2)) % 10)) % 10;
+    return (10 - (weightedSum(digits, DUI_WEIGHTS) % 10)) % 10;
   }
 }
 
@@ -32,9 +33,7 @@ export interface NitOptions {
   dui?: Dui;
 }
 
-const NEW_WEIGHTS = range(0, 12).map(
-  (i) => [2, 7, 6, 5, 4, 3][i % 6] as number,
-);
+const NEW_WEIGHTS = range(0, 12).map((i) => [2, 7, 6, 5, 4, 3][i % 6] as number);
 
 /**
  * NIT (Ministerio de Hacienda), 0000-000000-000-0. Nivel: completa.
@@ -62,9 +61,7 @@ export class Nit extends AbstractDocument implements GeneratesNumbers {
         if (!/^\d+$/.test(compact)) {
           return ValidationError.Format;
         }
-        return Nit.checkDigit(compact) === Number(compact.charAt(13))
-          ? null
-          : ValidationError.Checksum;
+        return Nit.checkDigit(compact) === Number(compact.charAt(13)) ? null : ValidationError.Checksum;
       default:
         return ValidationError.Format;
     }
@@ -76,14 +73,12 @@ export class Nit extends AbstractDocument implements GeneratesNumbers {
   }
 
   override format(number: string): string {
-    return this.compact(number).length === 9
-      ? this.dui.format(number)
-      : this.group(number, [4, 6, 3, 1]);
+    return this.compact(number).length === 9 ? this.dui.format(number) : this.group(number, [4, 6, 3, 1]);
   }
 
   private static checkDigit(nit: string): number {
     if (int(nit.slice(10, 13)) <= 100) {
-      const remainder = weightedSum(nit, range(14, 2)) % 11;
+      const remainder = weightedSum(nit, OLD_NIT_WEIGHTS) % 11;
       return remainder === 10 ? 0 : remainder;
     }
     const remainder = weightedSum(nit, NEW_WEIGHTS) % 11;

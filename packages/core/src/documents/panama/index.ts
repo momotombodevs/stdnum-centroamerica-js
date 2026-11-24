@@ -1,5 +1,5 @@
+import { type GeneratesNumbers, type ParsesNumbers, ValidationError } from '../../types';
 import { int, randomInt } from '../../utils';
-import { ValidationError, type GeneratesNumbers, type ParsesNumbers } from '../../types';
 import { AbstractDocument } from '../abstract-document';
 
 /** Tipo de cédula de Panamá, según el prefijo. */
@@ -60,7 +60,10 @@ export class Cedula extends AbstractDocument implements GeneratesNumbers, Parses
 
   /** Mayúsculas, con un solo guion entre grupos. */
   static normalize(number: string): string {
-    return String(number).trim().replace(/[\s-]+/g, '-').toUpperCase();
+    return String(number)
+      .trim()
+      .replace(/[\s-]+/g, '-')
+      .toUpperCase();
   }
 
   protected override prepare(number: string): string {
@@ -79,9 +82,10 @@ export class Cedula extends AbstractDocument implements GeneratesNumbers, Parses
     const parts = normalized.split('-') as [string, string, string, string?];
     switch (parts[0]) {
       case 'PE':
-        return new CedulaData(CedulaKind.BornAbroad, null, null, parts[1], parts[2]);
-      case 'N':
-        return new CedulaData(CedulaKind.Naturalized, null, null, parts[1], parts[2]);
+      case 'N': {
+        const kind = parts[0] === 'PE' ? CedulaKind.BornAbroad : CedulaKind.Naturalized;
+        return new CedulaData(kind, null, null, parts[1], parts[2]);
+      }
       case 'E':
         return new CedulaData(CedulaKind.ForeignResident, int(parts[1]), null, null, parts[2]);
       default:
@@ -96,7 +100,9 @@ export class Cedula extends AbstractDocument implements GeneratesNumbers, Parses
   }
 }
 
-const OTHER_FORMS = [
+/** La cédula y las demás formas de RUC: PE, NT y persona jurídica. */
+const RUC_FORMS: readonly RegExp[] = [
+  Cedula.PATTERN,
   /^(?:PE-\d{1,6}-\d{1,6}-\d{1,6}|(?:1[0-3]|[1-9])-PE-\d{1,6}-\d{1,6})$/,
   /^(?:1[0-3]|[1-9])-NT-\d{1,6}-\d{1,6}$/,
   /^\d{1,10}-\d{1,6}-\d{1,8}$/,
@@ -117,14 +123,8 @@ export class Ruc extends AbstractDocument implements GeneratesNumbers {
   }
 
   protected override check(compact: string): ValidationError | null {
-    if (compact.length >= 5 && compact.length <= 21) {
-      for (const pattern of [Cedula.PATTERN, ...OTHER_FORMS]) {
-        if (pattern.test(compact)) {
-          return null;
-        }
-      }
-    }
-    return ValidationError.Format;
+    const fits = compact.length >= 5 && compact.length <= 21 && RUC_FORMS.some((form) => form.test(compact));
+    return fits ? null : ValidationError.Format;
   }
 
   /** Una cédula es un RUC válido (persona natural). */
