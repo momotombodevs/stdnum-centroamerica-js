@@ -1,4 +1,4 @@
-import { ValidationError, ValidationResult, type Document } from '../types';
+import { type Document, ValidationError, ValidationResult } from '../types';
 
 const SEPARATORS = /[ \t\n\r\f\v-]/g;
 

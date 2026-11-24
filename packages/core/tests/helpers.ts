@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ValidationError, type Document } from '../src';
+import { type Document, ValidationError } from '../src';
 
 export interface Cases {
   validos: Record<string, string> | string[];

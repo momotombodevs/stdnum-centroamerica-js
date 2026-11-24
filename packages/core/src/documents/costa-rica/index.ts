@@ -1,5 +1,5 @@
-import { randomDigits, randomInt } from '../../utils';
 import type { GeneratesNumbers } from '../../types';
+import { randomDigits, randomInt } from '../../utils';
 import { AbstractDocument } from '../abstract-document';
 
 /** Cédula de identidad (TSE): 9 dígitos sin cero inicial, 0-0000-0000. Nivel: formato. */

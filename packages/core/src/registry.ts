@@ -6,12 +6,12 @@ import * as Mrz from './documents/mrz';
 import * as Nicaragua from './documents/nicaragua';
 import * as Panama from './documents/panama';
 import {
+  type Document,
+  type DocumentInfo,
   isDocument,
   isGenerator,
   isParser,
   Level,
-  type Document,
-  type DocumentInfo,
   type ValidationResult,
 } from './types';
 
@@ -59,10 +59,12 @@ type ParseResult<K extends string> = K extends DocumentKey
     ? R
     : never
   : object | null;
-type ParsableKey = { [K in DocumentKey]: DocumentMap[K] extends { parse(n: string): unknown } ? K : never }[DocumentKey];
+type ParsableKey = {
+  [K in DocumentKey]: DocumentMap[K] extends { parse(n: string): unknown } ? K : never;
+}[DocumentKey];
 
 /** Clase de un documento: se construye con un objeto de opciones opcional. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: cada clase define sus propias opciones; con unknown no serían asignables
 export type DocumentClass<T extends Document = Document> = new (options?: any) => T;
 
 interface CatalogEntry extends DocumentInfo {
