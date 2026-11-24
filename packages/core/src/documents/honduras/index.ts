@@ -1,6 +1,6 @@
 import { HondurasGeografia } from '../../data/honduras-geografia';
+import { type GeneratesNumbers, type ParsesNumbers, ValidationError } from '../../types';
 import { int, randomDigits, randomInt, zeroPad } from '../../utils';
-import { ValidationError, type GeneratesNumbers, type ParsesNumbers } from '../../types';
 import { AbstractDocument } from '../abstract-document';
 
 const SPECIAL_CODES: readonly string[] = HondurasGeografia.SPECIAL_CODES;
@@ -33,17 +33,15 @@ export class Identidad extends AbstractDocument implements GeneratesNumbers, Par
   protected override readonly pattern: RegExp = /^\d{13}$/;
 
   protected override checkContent(compact: string): ValidationError | null {
-    const year = int(compact.slice(4, 8));
-    if (year < 1800 || year > new Date().getFullYear()) {
+    const { departmentCode, municipalityCode, registrationYear } = Identidad.split(compact);
+    if (registrationYear < 1800 || registrationYear > new Date().getFullYear()) {
       return ValidationError.Component;
     }
-    const code = compact.slice(0, 4);
-    if (SPECIAL_CODES.includes(code)) {
-      return null;
+    if (departmentCode === null || municipalityCode === null) {
+      return null; // código especial: no indica un lugar
     }
-    const municipalities = HondurasGeografia.MUNICIPIOS_POR_DEPARTAMENTO[int(code.slice(0, 2))] ?? 0;
-    const municipality = int(code.slice(2, 4));
-    return municipality >= 1 && municipality <= municipalities ? null : ValidationError.Component;
+    const municipalities = HondurasGeografia.MUNICIPIOS_POR_DEPARTAMENTO[departmentCode] ?? 0;
+    return municipalityCode >= 1 && municipalityCode <= municipalities ? null : ValidationError.Component;
   }
 
   generate(): string {
@@ -57,15 +55,18 @@ export class Identidad extends AbstractDocument implements GeneratesNumbers, Par
     if (compact === null) {
       return null;
     }
+    return Identidad.split(compact);
+  }
+
+  /** Lee los componentes de un número compacto de 13 dígitos. */
+  private static split(compact: string): IdentidadData {
     const code = compact.slice(0, 4);
-    const special = SPECIAL_CODES.includes(code);
-    return new IdentidadData(
-      special ? null : int(code.slice(0, 2)),
-      special ? null : int(code.slice(2, 4)),
-      int(compact.slice(4, 8)),
-      compact.slice(8, 13),
-      special ? code : null,
-    );
+    const year = int(compact.slice(4, 8));
+    const sequence = compact.slice(8, 13);
+    if (SPECIAL_CODES.includes(code)) {
+      return new IdentidadData(null, null, year, sequence, code);
+    }
+    return new IdentidadData(int(code.slice(0, 2)), int(code.slice(2, 4)), year, sequence, null);
   }
 
   override format(number: string): string {

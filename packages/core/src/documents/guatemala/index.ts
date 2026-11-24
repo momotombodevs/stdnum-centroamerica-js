@@ -1,5 +1,5 @@
+import { type GeneratesNumbers, type ParsesNumbers, ValidationError } from '../../types';
 import { int, randomDigits, randomInt, range, weightedSum, zeroPad } from '../../utils';
-import { ValidationError, type GeneratesNumbers, type ParsesNumbers } from '../../types';
 import { AbstractDocument } from '../abstract-document';
 
 /** Componentes de un DPI válido. */
@@ -15,6 +15,7 @@ export class DpiData {
 }
 
 const DEPARTMENTS = 22;
+const DPI_WEIGHTS = range(2, 9);
 
 /**
  * DPI / CUI (RENAP): 8 dígitos + verificador + departamento (2) + municipio (2).
@@ -25,9 +26,8 @@ export class Dpi extends AbstractDocument implements GeneratesNumbers, ParsesNum
   protected override readonly pattern: RegExp = /^\d{13}$/;
 
   protected override checkContent(compact: string): ValidationError | null {
-    const department = int(compact.slice(9, 11));
-    const municipality = int(compact.slice(11, 13));
-    if (department < 1 || department > DEPARTMENTS || municipality < 1) {
+    const { departmentCode, municipalityCode } = Dpi.split(compact);
+    if (departmentCode < 1 || departmentCode > DEPARTMENTS || municipalityCode < 1) {
       return ValidationError.Component;
     }
     return Dpi.checkDigit(compact) === Number(compact.charAt(8)) ? null : ValidationError.Checksum;
@@ -46,7 +46,7 @@ export class Dpi extends AbstractDocument implements GeneratesNumbers, ParsesNum
     if (compact === null) {
       return null;
     }
-    return new DpiData(compact.slice(0, 8), int(compact.slice(9, 11)), int(compact.slice(11, 13)));
+    return Dpi.split(compact);
   }
 
   override format(number: string): string {
@@ -55,7 +55,12 @@ export class Dpi extends AbstractDocument implements GeneratesNumbers, ParsesNum
 
   /** Verificador de los 8 primeros dígitos; 10 no es un dígito y nunca aparece en un CUI. */
   private static checkDigit(digits: string): number {
-    return weightedSum(digits, range(2, 9)) % 11;
+    return weightedSum(digits, DPI_WEIGHTS) % 11;
+  }
+
+  /** Lee los componentes de un DPI compacto de 13 dígitos. */
+  private static split(compact: string): DpiData {
+    return new DpiData(compact.slice(0, 8), int(compact.slice(9, 11)), int(compact.slice(11, 13)));
   }
 }
 

@@ -1,29 +1,18 @@
-import { NicaraguaMunicipios } from "../../data/nicaragua-municipios";
-import {
-  int,
-  isValidDate,
-  randomDigits,
-  randomInt,
-  randomItem,
-  zeroPad,
-} from "../../utils";
-import {
-  ValidationError,
-  type GeneratesNumbers,
-  type ParsesNumbers,
-} from "../../types";
-import { AbstractDocument } from "../abstract-document";
+import { NicaraguaMunicipios } from '../../data/nicaragua-municipios';
+import { type GeneratesNumbers, type ParsesNumbers, ValidationError } from '../../types';
+import { int, isValidDate, randomDigits, randomInt, randomItem, zeroPad } from '../../utils';
+import { AbstractDocument } from '../abstract-document';
 
-const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXY";
-const CEDULA_PATTERN = /^(\d{3})(\d{2})(\d{2})\d{2}\d{4}([A-Z])$/;
+const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXY';
+
+/** Fecha AAAAMMDD, comparable como texto. */
+function ymd(year: number, month: number, day: number): string {
+  return zeroPad(year, 4) + zeroPad(month, 2) + zeroPad(day, 2);
+}
 
 function today(): string {
   const now = new Date();
-  return (
-    zeroPad(now.getFullYear(), 4) +
-    zeroPad(now.getMonth() + 1, 2) +
-    zeroPad(now.getDate(), 2)
-  );
+  return ymd(now.getFullYear(), now.getMonth() + 1, now.getDate());
 }
 
 /**
@@ -57,16 +46,9 @@ export class CedulaData {
    * @param reference fecha de referencia AAAAMMDD; por defecto, hoy
    */
   birthYearCandidates(reference: string = today()): number[] {
-    return [
-      1900 + this.birthYearTwoDigits,
-      2000 + this.birthYearTwoDigits,
-    ].filter(
+    return [1900 + this.birthYearTwoDigits, 2000 + this.birthYearTwoDigits].filter(
       (year) =>
-        isValidDate(year, this.birthMonth, this.birthDay) &&
-        zeroPad(year, 4) +
-          zeroPad(this.birthMonth, 2) +
-          zeroPad(this.birthDay, 2) <=
-          reference,
+        isValidDate(year, this.birthMonth, this.birthDay) && ymd(year, this.birthMonth, this.birthDay) <= reference,
     );
   }
 }
@@ -88,10 +70,8 @@ export interface CedulaOptions {
  * ABCDEFGHJKLMNPQRSTUVWXY. El CSE no publica la fórmula, así que por defecto solo se
  * exige que la letra tenga forma de letra.
  */
-export class Cedula
-  extends AbstractDocument
-  implements GeneratesNumbers, ParsesNumbers<CedulaData>
-{
+export class Cedula extends AbstractDocument implements GeneratesNumbers, ParsesNumbers<CedulaData> {
+  protected override readonly pattern: RegExp = /^\d{13}[A-Z]$/;
   private readonly strictMunicipality: boolean;
   private readonly strictLetter: boolean;
 
@@ -101,26 +81,12 @@ export class Cedula
     this.strictLetter = options.strictLetter ?? false;
   }
 
-  protected override check(compact: string): ValidationError | null {
-    const m = CEDULA_PATTERN.exec(compact);
-    if (m === null) {
-      return ValidationError.Format;
-    }
-    const [, municipality, day, month, letter] = m as unknown as [
-      string,
-      string,
-      string,
-      string,
-      string,
-    ];
-    if (
-      !this.isKnownMunicipality(int(municipality)) ||
-      !isValidDate(2000, int(month), int(day))
-    ) {
+  protected override checkContent(compact: string): ValidationError | null {
+    const data = Cedula.split(compact);
+    if (!this.isKnownMunicipality(data.municipalityCode) || !isValidDate(2000, data.birthMonth, data.birthDay)) {
       return ValidationError.Component;
     }
-    return !this.strictLetter ||
-      Cedula.checkLetter(compact.slice(0, 13)) === letter
+    return !this.strictLetter || Cedula.checkLetter(compact.slice(0, 13)) === data.letter
       ? null
       : ValidationError.Checksum;
   }
@@ -141,6 +107,11 @@ export class Cedula
     if (compact === null) {
       return null;
     }
+    return Cedula.split(compact);
+  }
+
+  /** Lee los componentes de una cédula compacta con forma válida. */
+  private static split(compact: string): CedulaData {
     return new CedulaData(
       int(compact.slice(0, 3)),
       int(compact.slice(3, 5)),
@@ -193,16 +164,14 @@ export class Ruc extends AbstractDocument implements GeneratesNumbers {
   }
 
   protected override check(compact: string): ValidationError | null {
-    if (compact.startsWith("0000")) {
+    if (compact.startsWith('0000')) {
       return ValidationError.Component;
     }
-    return /^[JNRE]\d{13}$/.test(compact)
-      ? null
-      : this.cedula.validate(compact).error;
+    return /^[JNRE]\d{13}$/.test(compact) ? null : this.cedula.validate(compact).error;
   }
 
   generate(): string {
-    return randomItem(["J", "N", "R", "E"]) + randomDigits(13);
+    return randomItem(['J', 'N', 'R', 'E']) + randomDigits(13);
   }
 
   override format(number: string): string {
