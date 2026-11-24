@@ -6,9 +6,22 @@ Validación, formato y compactado de documentos de identidad y fiscales de Centr
 - ESM y CommonJS, con tipos para ambos (`.d.ts` y `.d.cts`).
 - `sideEffects: false`: los bundlers eliminan lo que no se usa.
 
+## Instalación
+
+```sh
+npm install @momotombo/stdnum-centroamerica   # npm
+pnpm add @momotombo/stdnum-centroamerica      # pnpm
+yarn add @momotombo/stdnum-centroamerica      # Yarn (classic y Berry)
+bun add @momotombo/stdnum-centroamerica       # Bun
+deno add npm:@momotombo/stdnum-centroamerica  # Deno 2
+npx expo install @momotombo/stdnum-centroamerica  # Expo: igual que npm, sin código nativo
 ```
-npm install @momotombo/stdnum-centroamerica
-```
+
+Es una dependencia normal de producción (no `-D`): se usa en tiempo de ejecución. No tiene dependencias propias, scripts de instalación ni código nativo, así que en React Native/Expo no hay que hacer `pod install` ni reconstruir la app.
+
+- **Yarn PnP / pnpm estricto**: no necesita configuración extra; no depende de paquetes no declarados.
+- **Deno** sin `deno add`: importe directamente con `npm:@momotombo/stdnum-centroamerica`.
+- **Sin gestor de paquetes**: ver [Navegador sin bundler](#navegador-sin-bundler-deno-y-bun).
 
 ## Uso
 
@@ -27,6 +40,8 @@ Registry.isValid('ni.ruc', '0000300766011M');      // false: un RUC no puede ini
 Registry.make('ni.cedula').format('0010101900001n');    // "001-010190-0001N"
 Registry.make('ni.cedula').compact('001-010190-0001n'); // "0010101900001N"
 ```
+
+`format()` y `compact()` no validan ni lanzan errores: con un número inválido devuelven su forma compacta, sin agrupar (`format('abc')` da `"ABC"`). Valide primero si va a guardar el resultado. `isValid()` devuelve `false` con cadenas vacías, `null` o `undefined`, y una clave desconocida lanza `InvalidArgumentError`.
 
 Con CommonJS:
 
@@ -124,6 +139,19 @@ class CodigoPostal extends AbstractDocument {
 Registry.register('xx.codigo_postal', CodigoPostal);
 Registry.isValid('xx.codigo_postal', '12345'); // true
 ```
+
+### Referencia rápida de `Registry`
+
+| Método | Devuelve |
+|--------|----------|
+| `isValid(clave, número, opciones?)` | `boolean` |
+| `validate(clave, número, opciones?)` | `ValidationResult`: `isValid()` y `error` (`ValidationError` o `null`) |
+| `make(clave, opciones?)` | la instancia del documento, con `isValid()`, `validate()`, `format()` y `compact()` |
+| `parse(clave, número)` | los componentes del número, o `null` si no es válido (solo en las claves listadas arriba) |
+| `generate(clave)` | un número sintético válido |
+| `keys()` | las claves registradas |
+| `describe()` | `{ key, country, name, level }` de cada documento incluido |
+| `register(clave, Clase)` | agrega o reemplaza un documento |
 
 ## Documentos soportados
 
@@ -232,6 +260,8 @@ app.post('/clientes', (req, res) => {
   }
   // guardar la forma compacta
   const rtn = Registry.make('hn.rtn').compact(req.body.rtn);
+  // ... guardar rtn
+  res.status(201).json({ rtn });
 });
 ```
 
@@ -262,12 +292,14 @@ export class CrearClienteDto {
 
 ```html
 <script type="module">
-  import { Registry } from 'https://cdn.jsdelivr.net/npm/@momotombo/stdnum-centroamerica/+esm';
+  import { Registry } from 'https://cdn.jsdelivr.net/npm/@momotombo/stdnum-centroamerica@0.1/+esm';
   console.log(Registry.isValid('sv.dui', '12345678-4'));
 </script>
 ```
 
-En Deno: `import { Registry } from 'npm:@momotombo/stdnum-centroamerica';`. En Bun, `bun add @momotombo/stdnum-centroamerica`.
+Fije la versión en la URL (`@0.1`) para que una versión mayor no le cambie el código sin aviso. También funciona con `https://esm.sh/@momotombo/stdnum-centroamerica@0.1` y `https://unpkg.com/@momotombo/stdnum-centroamerica@0.1/dist/index.js`.
+
+En Deno: `import { Registry } from 'npm:@momotombo/stdnum-centroamerica@0.1';` (o `deno add` y luego `import ... from '@momotombo/stdnum-centroamerica'`). En Bun funciona igual que en Node, con ESM o `require`.
 
 ## Compatibilidad
 
