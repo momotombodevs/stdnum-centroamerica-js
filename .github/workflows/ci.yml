@@ -21,5 +21,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:coverage
-      - run: npm run build
-      - run: npm run check:package
+      - if: matrix.node != 20
+        run: npm run build
+      - if: matrix.node != 20
+        run: npm run check:package

@@ -61,7 +61,7 @@ Cada documento se identifica con una clave `país.documento`:
 
 ## Desarrollo
 
-Requisitos: Node 20 o superior y npm (el repo usa npm workspaces y `package-lock.json`).
+Requisitos: Node 22.18 o superior (lo exige tsdown) y npm (el repo usa npm workspaces y `package-lock.json`).
 
 ```sh
 git clone https://github.com/momotombodevs/stdnum-centroamerica-js.git
@@ -80,7 +80,7 @@ npm install
 | `npm run build` | compila ESM, CJS y tipos con tsdown en `packages/core/dist` |
 | `npm run check:package` | `publint` y `are-the-types-wrong` sobre el paquete empacado |
 
-El CI (`.github/workflows/ci.yml`) corre lint, typecheck, pruebas con cobertura, build y `check:package` en Node 20, 22 y 24. Antes de abrir un PR conviene correr lo mismo en local:
+El CI (`.github/workflows/ci.yml`) corre lint, typecheck y pruebas con cobertura en Node 20, 22 y 24, y build y `check:package` en 22 y 24 (tsdown no soporta Node 20). Antes de abrir un PR conviene correr lo mismo en local:
 
 ```sh
 npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run check:package
