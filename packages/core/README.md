@@ -1,4 +1,4 @@
-# @momotombo-devs/stdnum-centroamerica
+# @momotombodevs/stdnum-centroamerica
 
 Validación, formato y compactado de documentos de identidad y fiscales de Centroamérica, en TypeScript.
 
@@ -9,18 +9,18 @@ Validación, formato y compactado de documentos de identidad y fiscales de Centr
 ## Instalación
 
 ```sh
-npm install @momotombo-devs/stdnum-centroamerica   # npm
-pnpm add @momotombo-devs/stdnum-centroamerica      # pnpm
-yarn add @momotombo-devs/stdnum-centroamerica      # Yarn (classic y Berry)
-bun add @momotombo-devs/stdnum-centroamerica       # Bun
-deno add npm:@momotombo-devs/stdnum-centroamerica  # Deno 2
-npx expo install @momotombo-devs/stdnum-centroamerica  # Expo: igual que npm, sin código nativo
+npm install @momotombodevs/stdnum-centroamerica   # npm
+pnpm add @momotombodevs/stdnum-centroamerica      # pnpm
+yarn add @momotombodevs/stdnum-centroamerica      # Yarn (classic y Berry)
+bun add @momotombodevs/stdnum-centroamerica       # Bun
+deno add npm:@momotombodevs/stdnum-centroamerica  # Deno 2
+npx expo install @momotombodevs/stdnum-centroamerica  # Expo: igual que npm, sin código nativo
 ```
 
 Es una dependencia normal de producción (no `-D`): se usa en tiempo de ejecución. No tiene dependencias propias, scripts de instalación ni código nativo, así que en React Native/Expo no hay que hacer `pod install` ni reconstruir la app.
 
 - **Yarn PnP / pnpm estricto**: no necesita configuración extra; no depende de paquetes no declarados.
-- **Deno** sin `deno add`: importe directamente con `npm:@momotombo-devs/stdnum-centroamerica`.
+- **Deno** sin `deno add`: importe directamente con `npm:@momotombodevs/stdnum-centroamerica`.
 - **Sin gestor de paquetes**: ver [Navegador sin bundler](#navegador-sin-bundler-deno-y-bun).
 
 ## Uso
@@ -28,7 +28,7 @@ Es una dependencia normal de producción (no `-D`): se usa en tiempo de ejecuci�
 Cada documento tiene una clave `país.documento` (`ni.cedula`, `ni.ruc`, ...) y tres operaciones: `isValid()`, `format()` y `compact()`.
 
 ```ts
-import { Registry } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry } from '@momotombodevs/stdnum-centroamerica';
 
 // Validar
 Registry.isValid('ni.cedula', '001-010190-0001N'); // true
@@ -46,13 +46,13 @@ Registry.make('ni.cedula').compact('001-010190-0001n'); // "0010101900001N"
 Con CommonJS:
 
 ```js
-const { Registry } = require('@momotombo-devs/stdnum-centroamerica');
+const { Registry } = require('@momotombodevs/stdnum-centroamerica');
 ```
 
 `validate()` devuelve además el motivo del fallo, útil para mostrar mensajes de error:
 
 ```ts
-import { Registry, ValidationError } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry, ValidationError } from '@momotombodevs/stdnum-centroamerica';
 
 const result = Registry.validate('ni.cedula', '001-010190-0001A', { strictLetter: true });
 result.isValid(); // false
@@ -82,7 +82,7 @@ Registry.isValid('ni.ruc', '001-010190-0001A', { strictLetter: true }); // false
 También se pueden usar las clases directamente:
 
 ```ts
-import { Nicaragua, Guatemala, Td3 } from '@momotombo-devs/stdnum-centroamerica';
+import { Nicaragua, Guatemala, Td3 } from '@momotombodevs/stdnum-centroamerica';
 
 const cedula = new Nicaragua.Cedula({ strictMunicipality: true });
 cedula.isValid('001-010190-0001N');            // true
@@ -130,7 +130,7 @@ Registry.generate('gt.dpi'); // "2381590430101"
 Una clave desconocida lanza `InvalidArgumentError`. `Registry.keys()` lista las claves disponibles y `Registry.register(clave, Clase)` agrega o reemplaza un documento; la clase debe implementar `Document` (lo más simple es extender `AbstractDocument`).
 
 ```ts
-import { AbstractDocument, Registry } from '@momotombo-devs/stdnum-centroamerica';
+import { AbstractDocument, Registry } from '@momotombodevs/stdnum-centroamerica';
 
 class CodigoPostal extends AbstractDocument {
   protected override readonly pattern = /^\d{5}$/;
@@ -192,7 +192,7 @@ El paquete no necesita adaptadores: es una función pura que cada framework llam
 
 ```tsx
 import { useMemo, useState } from 'react';
-import { Registry, type DocumentKey } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry, type DocumentKey } from '@momotombodevs/stdnum-centroamerica';
 
 function useDocument(key: DocumentKey, value: string) {
   return useMemo(() => {
@@ -220,7 +220,7 @@ Con React Hook Form o Formik basta una función de validación: `validate: (v) =
 ```vue
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Registry } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry } from '@momotombodevs/stdnum-centroamerica';
 
 const cedula = ref('');
 const error = computed(() => Registry.validate('ni.cedula', cedula.value).error);
@@ -236,7 +236,7 @@ const error = computed(() => Registry.validate('ni.cedula', cedula.value).error)
 
 ```ts
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { Registry, type DocumentKey } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry, type DocumentKey } from '@momotombodevs/stdnum-centroamerica';
 
 export function documentoValidator(key: DocumentKey, options?: object): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -252,7 +252,7 @@ export function documentoValidator(key: DocumentKey, options?: object): Validato
 ### Node.js, Express y NestJS
 
 ```ts
-import { Registry } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry } from '@momotombodevs/stdnum-centroamerica';
 
 app.post('/clientes', (req, res) => {
   if (!Registry.isValid('hn.rtn', req.body.rtn)) {
@@ -269,7 +269,7 @@ En NestJS, con `class-validator`:
 
 ```ts
 import { registerDecorator, type ValidationOptions } from 'class-validator';
-import { Registry, type DocumentKey } from '@momotombo-devs/stdnum-centroamerica';
+import { Registry, type DocumentKey } from '@momotombodevs/stdnum-centroamerica';
 
 export function IsDocumento(key: DocumentKey, validationOptions?: ValidationOptions) {
   return (object: object, propertyName: string) =>
@@ -292,14 +292,14 @@ export class CrearClienteDto {
 
 ```html
 <script type="module">
-  import { Registry } from 'https://cdn.jsdelivr.net/npm/@momotombo-devs/stdnum-centroamerica@0.1/+esm';
+  import { Registry } from 'https://cdn.jsdelivr.net/npm/@momotombodevs/stdnum-centroamerica@0.1/+esm';
   console.log(Registry.isValid('sv.dui', '12345678-4'));
 </script>
 ```
 
-Fije la versión en la URL (`@0.1`) para que una versión mayor no le cambie el código sin aviso. También funciona con `https://esm.sh/@momotombo-devs/stdnum-centroamerica@0.1` y `https://unpkg.com/@momotombo-devs/stdnum-centroamerica@0.1/dist/index.js`.
+Fije la versión en la URL (`@0.1`) para que una versión mayor no le cambie el código sin aviso. También funciona con `https://esm.sh/@momotombodevs/stdnum-centroamerica@0.1` y `https://unpkg.com/@momotombodevs/stdnum-centroamerica@0.1/dist/index.js`.
 
-En Deno: `import { Registry } from 'npm:@momotombo-devs/stdnum-centroamerica@0.1';` (o `deno add` y luego `import ... from '@momotombo-devs/stdnum-centroamerica'`). En Bun funciona igual que en Node, con ESM o `require`.
+En Deno: `import { Registry } from 'npm:@momotombodevs/stdnum-centroamerica@0.1';` (o `deno add` y luego `import ... from '@momotombodevs/stdnum-centroamerica'`). En Bun funciona igual que en Node, con ESM o `require`.
 
 ## Compatibilidad
 
