@@ -1,6 +1,6 @@
 # stdnum-centroamerica-js
 
-Monorepo de [`@momotombo/stdnum-centroamerica`](packages/core): validación, formato y compactado de documentos de identidad y fiscales de Centroamérica (DPI, NIT, DUI, cédulas, RTN, RUC, DIMEX y MRZ de pasaportes) para TypeScript y JavaScript.
+Monorepo de [`@momotombo-devs/stdnum-centroamerica`](packages/core): validación, formato y compactado de documentos de identidad y fiscales de Centroamérica (DPI, NIT, DUI, cédulas, RTN, RUC, DIMEX y MRZ de pasaportes) para TypeScript y JavaScript.
 
 - Sin dependencias ni APIs de Node: funciona en Node, navegadores, React, React Native/Expo, Vue, Angular, NestJS, Deno, Bun y edge runtimes.
 - ESM y CommonJS, con tipos incluidos.
@@ -10,19 +10,19 @@ Monorepo de [`@momotombo/stdnum-centroamerica`](packages/core): validación, for
 
 | Gestor | Comando |
 |--------|---------|
-| npm | `npm install @momotombo/stdnum-centroamerica` |
-| pnpm | `pnpm add @momotombo/stdnum-centroamerica` |
-| Yarn | `yarn add @momotombo/stdnum-centroamerica` |
-| Bun | `bun add @momotombo/stdnum-centroamerica` |
-| Deno | `deno add npm:@momotombo/stdnum-centroamerica` |
-| Expo | `npx expo install @momotombo/stdnum-centroamerica` |
+| npm | `npm install @momotombo-devs/stdnum-centroamerica` |
+| pnpm | `pnpm add @momotombo-devs/stdnum-centroamerica` |
+| Yarn | `yarn add @momotombo-devs/stdnum-centroamerica` |
+| Bun | `bun add @momotombo-devs/stdnum-centroamerica` |
+| Deno | `deno add npm:@momotombo-devs/stdnum-centroamerica` |
+| Expo | `npx expo install @momotombo-devs/stdnum-centroamerica` |
 
 No necesita configuración extra con Yarn PnP ni con pnpm estricto, y no tiene código nativo: en React Native no hay que reconstruir la app. Para usarlo sin gestor de paquetes (CDN, `<script type="module">`), vea el [README del paquete](packages/core/README.md#navegador-sin-bundler-deno-y-bun).
 
 ## Uso rápido
 
 ```ts
-import { Registry } from '@momotombo/stdnum-centroamerica';
+import { Registry } from '@momotombo-devs/stdnum-centroamerica';
 
 // Validar
 Registry.isValid('ni.cedula', '001-010190-0001N'); // true
@@ -39,7 +39,7 @@ Registry.make('ni.cedula').compact('001-010190-0001N'); // "0010101900001N"
 Registry.parse('ni.cedula', '001-010190-0001N')?.birthYearCandidates(); // [1990]
 ```
 
-Con CommonJS: `const { Registry } = require('@momotombo/stdnum-centroamerica');`.
+Con CommonJS: `const { Registry } = require('@momotombo-devs/stdnum-centroamerica');`.
 
 Cada documento se identifica con una clave `país.documento`:
 
